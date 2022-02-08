@@ -1,15 +1,21 @@
 package com.example.feldmantest
 
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
-import android.view.Menu
-import android.view.MenuItem
 import com.example.feldmantest.databinding.ActivityMainBinding
+import com.google.android.material.snackbar.Snackbar
+import com.google.gson.Gson
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,6 +38,130 @@ class MainActivity : AppCompatActivity() {
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
         }
+
+        getPhotosAlbumsAndComments()
+    }
+
+    private fun getPhotosAlbumsAndComments() {
+        RetroFitService.getService().getComments().enqueue(object : Callback<Comment> {
+            override fun onResponse(call: Call<Comment>, response: Response<Comment>) {
+                if (response.isSuccessful) {
+                    val comments = response.body()
+
+                    RetroFitService.getService().getAlbums().enqueue(object : Callback<Album> {
+                        override fun onResponse(call: Call<Album>, response: Response<Album>) {
+                            if (response.isSuccessful) {
+                                val albums = response.body()
+
+                                RetroFitService.getService().getPhotos().enqueue(object : Callback<Photo> {
+                                    override fun onResponse(call: Call<Photo>, response: Response<Photo>) {
+                                        if (response.isSuccessful) {
+                                            val photos = response.body()
+
+                                            val gson = Gson()
+                                            val commentsJSON = gson.toJson(comments)
+                                            val albumsJSON = gson.toJson(albums)
+                                            val photosJSON = gson.toJson(photos)
+
+                                            val builder: AlertDialog.Builder = AlertDialog.Builder(this@MainActivity)
+
+                                            // Set the message show for the Alert time
+                                            builder.setMessage(commentsJSON)
+
+                                            // Set Alert Title
+                                            builder.setTitle("Comments")
+                                            builder.setCancelable(false)
+                                            builder
+                                                .setPositiveButton(
+                                                    "Ok"
+                                                ) { dialog, _ -> // When the user click yes button
+                                                    // then app will close
+                                                    dialog.dismiss()
+                                                    val builder: AlertDialog.Builder = AlertDialog.Builder(this@MainActivity)
+
+                                                    // Set the message show for the Alert time
+                                                    builder.setMessage(albumsJSON)
+
+                                                    // Set Alert Title
+                                                    builder.setTitle("Albums")
+                                                    builder.setCancelable(false)
+                                                    builder
+                                                        .setPositiveButton(
+                                                            "Ok"
+                                                        ) { dialog, _ -> // When the user click yes button
+                                                            // then app will close
+                                                            dialog.dismiss()
+                                                            val builder: AlertDialog.Builder = AlertDialog.Builder(this@MainActivity)
+
+                                                            // Set the message show for the Alert time
+                                                            builder.setMessage(photosJSON)
+
+                                                            // Set Alert Title
+                                                            builder.setTitle("Photos")
+                                                            builder.setCancelable(false)
+                                                            builder
+                                                                .setPositiveButton(
+                                                                    "Ok"
+                                                                ) { dialog, _ -> // When the user click yes button
+                                                                    // then app will close
+                                                                    dialog.dismiss()
+                                                                }
+
+                                                            // Create the Alert dialog
+                                                            val alertDialog: AlertDialog = builder.create()
+
+                                                            // Show the Alert Dialog box
+                                                            alertDialog.show()
+                                                        }
+
+                                                    // Create the Alert dialog
+                                                    val alertDialog: AlertDialog = builder.create()
+
+                                                    // Show the Alert Dialog box
+                                                    alertDialog.show()
+                                                }
+
+                                            // Create the Alert dialog
+                                            val alertDialog: AlertDialog = builder.create()
+
+                                            // Show the Alert Dialog box
+                                            alertDialog.show()
+                                        }
+                                    }
+
+                                    override fun onFailure(call: Call<Photo>, t: Throwable) {
+                                        Log.e(
+                                            "[GET_PHOTO_FAIL]",
+                                            t.message ?: ""
+                                        )
+
+                                        t.printStackTrace()
+                                    }
+                                })
+                            }
+                        }
+
+                        override fun onFailure(call: Call<Album>, t: Throwable) {
+                            Log.e(
+                                "[GET_ALBUM_FAIL]",
+                                t.message ?: ""
+                            )
+
+                            t.printStackTrace()
+                        }
+                    })
+                }
+            }
+
+            override fun onFailure(call: Call<Comment>, t: Throwable) {
+                Log.e(
+                    "[GET_COMMENT_FAIL]",
+                    t.message ?: ""
+                )
+
+                t.printStackTrace()
+            }
+        })
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

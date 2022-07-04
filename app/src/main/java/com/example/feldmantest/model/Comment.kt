@@ -15,9 +15,7 @@ data class Comment(
     val email: String = "",
     val body: String = ""
 ) {
-    companion object {
-        val default = Comment()
-    }
+    var user: User? = null
 }
 
 

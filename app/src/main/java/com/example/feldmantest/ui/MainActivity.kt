@@ -14,10 +14,12 @@ import com.example.feldmantest.databinding.ActivityMainBinding
 import com.example.feldmantest.model.Album
 import com.example.feldmantest.model.Comment
 import com.example.feldmantest.model.Photo
+import com.example.feldmantest.model.Post
 import com.example.feldmantest.network.RetroFitService
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import kotlinx.coroutines.*
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -81,6 +83,55 @@ class MainActivity : AppCompatActivity() {
         val albums = albumsRequest.await()
         val photos = photosRequest.await()
         Gallery(comments,albums,photos)
+    }
+
+    private suspend fun getUsersPostsComments(): List<Post> = coroutineScope {
+        val usersRequest = async { RetroFitService.getService().getAllUsers() }
+        val postsRequest = async { RetroFitService.getService().getAllPosts() }
+        val commentsRequest = async { RetroFitService.getService().getAllComments() }
+
+        val users = usersRequest.await()
+        val posts = postsRequest.await()
+        val comments = commentsRequest.await()
+
+        val allPosts: MutableList<Post> = mutableListOf()
+
+        comments.forEach {  comment ->
+            users.forEach { user ->
+                if (comment.email == user.email
+                    || comment.name == user.name
+                    || comment.name == user.username
+                ) {
+                    comment.user = user
+                }
+            }
+        }
+
+        posts.sortedBy { it.id }
+
+        val postIds = posts.map { it.id }
+
+        comments.forEach { comment ->
+            val i = postIds.binarySearch(comment.id)
+            if (i >= 0) posts[i].comments.add(comment)
+        }
+
+        posts.forEach { post ->
+            comments.forEach {  comment ->
+                if (comment.postId == post.id) {
+                    post.comments.add(comment)
+                }
+            }
+            allPosts.add(post)
+        }
+
+        allPosts.forEach { post ->
+            users.forEach {  user ->
+                if (post.userId == user.id) post.user = user
+            }
+        }
+
+        allPosts
     }
 
     private fun createDialog(

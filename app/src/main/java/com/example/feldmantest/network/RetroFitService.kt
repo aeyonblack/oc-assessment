@@ -1,8 +1,9 @@
-package com.example.feldmantest
+package com.example.feldmantest.network
 
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -19,6 +20,7 @@ object RetroFitService {
     private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .readTimeout(120, TimeUnit.SECONDS)
         .connectTimeout(240, TimeUnit.SECONDS)
+        .connectionPool(ConnectionPool(10,2, TimeUnit.MINUTES))
         .addInterceptor(HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         })
@@ -30,7 +32,7 @@ object RetroFitService {
         .baseUrl("https://jsonplaceholder.typicode.com/")
         .addConverterFactory(GsonConverterFactory.create())
         .addConverterFactory(ScalarsConverterFactory.create())
-        .addCallAdapterFactory(RxJava2CallAdapterFactory.create())   ////// for supporting rx java in api call
+        //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())   ////// for supporting rx java in api call
 
     // make an observable subscribe on the IO thread and observe on the main thread
     fun <T> useNetwork(observable: Observable<T>) : Observable<T> = observable

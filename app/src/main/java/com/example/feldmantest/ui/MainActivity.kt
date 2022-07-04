@@ -19,7 +19,6 @@ import com.example.feldmantest.network.RetroFitService
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import kotlinx.coroutines.*
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -91,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         val commentsRequest = async { RetroFitService.getService().getAllComments() }
 
         val users = usersRequest.await()
-        val posts = postsRequest.await()
+        var posts = postsRequest.await()
         val comments = commentsRequest.await()
 
         val allPosts: MutableList<Post> = mutableListOf()
@@ -107,7 +106,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        posts.sortedBy { it.id }
+        posts = posts.sortedBy { it.id }
 
         val postIds = posts.map { it.id }
 

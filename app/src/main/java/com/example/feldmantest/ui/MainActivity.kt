@@ -93,8 +93,9 @@ class MainActivity : AppCompatActivity() {
         var posts = postsRequest.await()
         val comments = commentsRequest.await()
 
-        val allPosts: MutableList<Post> = mutableListOf()
+        var allPosts: MutableList<Post> = mutableListOf()
 
+        /* map comments to a user if such a user exists */
         comments.forEach {  comment ->
             users.forEach { user ->
                 if (comment.email == user.email
@@ -106,30 +107,28 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        /* add each comment to it's respective post's list of comments */
         posts = posts.sortedBy { it.id }
-
         val postIds = posts.map { it.id }
 
         comments.forEach { comment ->
-            val i = postIds.binarySearch(comment.id)
+            val i = postIds.binarySearch(comment.postId)
             if (i >= 0) posts[i].comments.add(comment)
         }
 
-        posts.forEach { post ->
-            comments.forEach {  comment ->
-                if (comment.postId == post.id) {
-                    post.comments.add(comment)
-                }
-            }
-            allPosts.add(post)
+        /* add all the modified posts to [allPosts] for further processing */
+        allPosts.addAll(posts)
+
+        /* map each post to it's respective user */
+        allPosts = allPosts.sortedBy { it.userId } as MutableList<Post>
+        val postUserIds = allPosts.map { it.userId }
+
+        users.forEach { user ->
+            val i = postUserIds.binarySearch(user.id)
+            if (i >= 0) allPosts[i].user = user
         }
 
-        allPosts.forEach { post ->
-            users.forEach {  user ->
-                if (post.userId == user.id) post.user = user
-            }
-        }
-
+        /* return the list of posts with comments and user relations mapped */
         allPosts
     }
 
